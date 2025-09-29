@@ -1,5 +1,4 @@
 const Drawing = require("dxf-writer");
-const fs = require("fs");
 
 const controller = {
   async generateDxf(req, res) {
@@ -28,7 +27,6 @@ const controller = {
       });
 
       const dxfString = d.toDxfString();
-      fs.writeFileSync("output2.dxf", dxfString);
 
       res.setHeader("Content-Disposition", "attachment; filename=output.dxf");
       res.setHeader("Content-Type", "application/dxf");
