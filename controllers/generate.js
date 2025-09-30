@@ -9,6 +9,7 @@ function checkPoint(pointsArray) {
       x: a.x + c.x - b.x,
       y: a.y + c.y - b.y,
       z: a.z || 0,
+      sn: 0,
     };
 
     return [...pointsArray, d];
