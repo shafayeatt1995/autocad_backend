@@ -37,6 +37,7 @@ const controller = {
         if (!pointsArray.length) return;
         const color = pointsArray[0].layerColor || 7;
 
+        const layerCode = pointsArray[0].layerCode;
         const layerName = pointsArray[0].layerName;
         ensureLayer(layerName, color, "CONTINUOUS");
 
@@ -63,7 +64,26 @@ const controller = {
             +pt.y,
             +pt.z || 0,
           ]);
-          polylineVertices.push(polylineVertices[0]);
+
+          if (
+            [
+              "B",
+              "MB",
+              "MH",
+              "UCB",
+              "UC",
+              "S",
+              "SS",
+              "TS",
+              "SP",
+              "PH",
+              "STAIR",
+              "DT",
+              "ST",
+            ].includes(layerCode)
+          ) {
+            polylineVertices.push(polylineVertices[0]);
+          }
           d.setActiveLayer(layerName);
           d.drawPolyline3d(polylineVertices);
         }
