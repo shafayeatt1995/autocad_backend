@@ -103,7 +103,20 @@ const controller = {
 
         if (
           processedPoints.length === 4 ||
-          (layerCode === "F" && processedPoints.length > 1)
+          ([
+            "F",
+            "P",
+            "DR",
+            "RCC",
+            "CC",
+            "PH",
+            "STAIR",
+            "CV",
+            "RE",
+            "DT",
+            "RB",
+          ].includes(layerCode) &&
+            processedPoints.length > 1)
         ) {
           const midX =
             processedPoints.reduce((acc, pt) => acc + +pt.x, 0) /
