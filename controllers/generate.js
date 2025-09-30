@@ -101,7 +101,10 @@ const controller = {
           d.drawPolyline3d(polylineVertices);
         }
 
-        if (processedPoints.length === 4) {
+        if (
+          processedPoints.length === 4 ||
+          (layerCode === "F" && processedPoints.length > 1)
+        ) {
           const midX =
             processedPoints.reduce((acc, pt) => acc + +pt.x, 0) /
             processedPoints.length;
