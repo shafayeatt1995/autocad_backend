@@ -36,7 +36,7 @@ const controller = {
 
       Object.entries(groupedPoints).forEach(([groupName, pointsArray], i) => {
         if (!pointsArray.length) return;
-        const color = pointsArray[0].layerColor || 7;
+        const color = pointsArray[0]?.layerColor || 7;
 
         const layerCode = pointsArray[0].layerCode;
         const layerName = pointsArray[0].layerName;
