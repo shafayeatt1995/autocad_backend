@@ -115,7 +115,7 @@ const controller = {
             midY,
             0.8,
             0,
-            `${floor ? floor + "_" : ""}${gettextCreation(pointsArray[0])}`,
+            `${floor}${gettextCreation(pointsArray[0])}`,
             "center",
             "middle"
           );
