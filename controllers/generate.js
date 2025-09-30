@@ -17,6 +17,26 @@ function checkPoint(pointsArray) {
   return pointsArray;
 }
 
+function gettextCreation(point) {
+  if (point.layerCode === "B") {
+    return "STD";
+  } else if (point.layerCode === "MB") {
+    return "MOSQUE";
+  } else if (point.layerCode === "BW") {
+    return "B.WALL";
+  } else if (point.layerCode === "S") {
+    return "SHOP";
+  } else if (point.layerCode === "SS") {
+    return "SHOPS";
+  } else if (point.layerCode === "SP") {
+    return "SEMI PUCCA";
+  } else if (point.layerCode === "TS") {
+    return "TIN SHED";
+  }
+
+  return point.layerName;
+}
+
 const controller = {
   async generateDxf(req, res) {
     try {
@@ -36,11 +56,8 @@ const controller = {
 
       Object.entries(groupedPoints).forEach(([groupName, pointsArray], i) => {
         if (!pointsArray.length) return;
-        const color = pointsArray[0]?.layerColor || 7;
-
-        const layerCode = pointsArray[0].layerCode;
-        const layerName = pointsArray[0].layerName;
-        ensureLayer(layerName, color, "CONTINUOUS");
+        const { layerCode, layerName, layerColor = 7, floor } = pointsArray[0];
+        ensureLayer(layerName, layerColor, "CONTINUOUS");
 
         const processedPoints = checkPoint(pointsArray);
 
@@ -51,11 +68,6 @@ const controller = {
           d.drawText(pt.x, pt.y, 0.4, 0, pt.z);
           d.setActiveLayer(layerName);
           d.drawPoint(pt.x, pt.y, pt.z);
-
-          // if (pt.id !== "") {
-          //   const nextPt = processedPoints[(i + 1) % processedPoints.length];
-          //   d.drawLine(pt.x, pt.y, nextPt.x, nextPt.y);
-          // }
         });
 
         const allHaveId = processedPoints.every((pt) => pt.id);
@@ -87,6 +99,25 @@ const controller = {
           }
           d.setActiveLayer(layerName);
           d.drawPolyline3d(polylineVertices);
+        }
+
+        if (processedPoints.length === 4) {
+          const midX =
+            processedPoints.reduce((acc, pt) => acc + +pt.x, 0) /
+            processedPoints.length;
+          const midY =
+            processedPoints.reduce((acc, pt) => acc + +pt.y, 0) /
+            processedPoints.length;
+          ensureLayer("TEXT", 7, "CONTINUOUS");
+          d.setActiveLayer("TEXT");
+          d.drawText(
+            midX,
+            midY,
+            0.8,
+            0,
+            `${floor ? floor + "_" : ""}${gettextCreation(pointsArray[0])}`,
+            "center"
+          );
         }
       });
 
