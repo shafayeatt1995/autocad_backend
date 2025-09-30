@@ -1,29 +1,72 @@
 const Drawing = require("dxf-writer");
 
+function checkPoint(pointsArray) {
+  if (Array.isArray(pointsArray) && pointsArray.length === 3) {
+    const [a, b, c] = pointsArray;
+
+    const d = {
+      ...a,
+      x: a.x + c.x - b.x,
+      y: a.y + c.y - b.y,
+      z: a.z || 0,
+    };
+
+    return [...pointsArray, d];
+  }
+  return pointsArray;
+}
+
 const controller = {
   async generateDxf(req, res) {
     try {
       const groupedPoints = req.body;
       const d = new Drawing();
 
+      const layers = new Set();
+      function ensureLayer(name, color = 7, type = "CONTINUOUS") {
+        if (!layers.has(name)) {
+          d.addLayer(name, color, type);
+          layers.add(name);
+        }
+      }
+
+      ensureLayer("CODE", 2, "CONTINUOUS");
+      ensureLayer("RL", 3, "CONTINUOUS");
+
       Object.entries(groupedPoints).forEach(([groupName, pointsArray], i) => {
         if (!pointsArray.length) return;
         const color = pointsArray[0].layerColor || 7;
 
-        d.addLayer(groupName, color, "CONTINUOUS");
-        d.setActiveLayer(groupName);
+        const layerName = pointsArray[0].layerName;
+        ensureLayer(layerName, color, "CONTINUOUS");
 
-        pointsArray.forEach((pt, i) => {
+        const processedPoints = checkPoint(pointsArray);
+
+        processedPoints.forEach((pt, i) => {
+          d.setActiveLayer("CODE");
+          d.drawText(pt.x, pt.y, 0.14, 0, `${pt.name}_${pt.sn}`);
+          d.setActiveLayer("RL");
+          d.drawText(pt.x, pt.y, 0.4, 0, pt.z);
+          d.setActiveLayer(layerName);
           d.drawPoint(pt.x, pt.y, pt.z);
-          d.drawText(pt.x, pt.y, 0.5, 0, pt.name);
 
-          if (groupName === "NEW_LAYER" || groupName === "PP") {
-            d.drawCircle(pt.x, pt.y, 0.2);
-          } else {
-            const nextPt = pointsArray[(i + 1) % pointsArray.length];
-            d.drawLine(pt.x, pt.y, nextPt.x, nextPt.y);
-          }
+          // if (pt.id !== "") {
+          //   const nextPt = processedPoints[(i + 1) % processedPoints.length];
+          //   d.drawLine(pt.x, pt.y, nextPt.x, nextPt.y);
+          // }
         });
+
+        const allHaveId = processedPoints.every((pt) => pt.id);
+        if (allHaveId && processedPoints.length > 1) {
+          const polylineVertices = processedPoints.map((pt) => [
+            +pt.x,
+            +pt.y,
+            +pt.z || 0,
+          ]);
+          polylineVertices.push(polylineVertices[0]);
+          d.setActiveLayer(layerName);
+          d.drawPolyline3d(polylineVertices);
+        }
       });
 
       const dxfString = d.toDxfString();
