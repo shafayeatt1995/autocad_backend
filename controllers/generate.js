@@ -116,7 +116,8 @@ const controller = {
             0.8,
             0,
             `${floor ? floor + "_" : ""}${gettextCreation(pointsArray[0])}`,
-            "center"
+            "center",
+            "middle"
           );
         }
       });
