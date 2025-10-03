@@ -1,42 +1,5 @@
 const Drawing = require("dxf-writer");
 
-function checkPoint(pointsArray) {
-  if (Array.isArray(pointsArray) && pointsArray.length === 3) {
-    const [a, b, c] = pointsArray;
-
-    const d = {
-      ...a,
-      x: a.x + c.x - b.x,
-      y: a.y + c.y - b.y,
-      z: a.z || 0,
-      sn: 0,
-    };
-
-    return [...pointsArray, d];
-  }
-  return pointsArray;
-}
-
-function gettextCreation(point) {
-  if (point.layerCode === "B") {
-    return "STD";
-  } else if (point.layerCode === "MB") {
-    return "MOSQUE";
-  } else if (point.layerCode === "BW") {
-    return "B.WALL";
-  } else if (point.layerCode === "S") {
-    return "SHOP";
-  } else if (point.layerCode === "SS") {
-    return "SHOPS";
-  } else if (point.layerCode === "SP") {
-    return "SEMI PUCCA";
-  } else if (point.layerCode === "TS") {
-    return "TIN SHED";
-  }
-
-  return point.layerName;
-}
-
 const controller = {
   async generateDxf(req, res) {
     try {
@@ -51,17 +14,16 @@ const controller = {
         }
       }
 
-      ensureLayer("CODE", 2, "CONTINUOUS");
-      ensureLayer("RL", 3, "CONTINUOUS");
+      ensureLayer("CODE", 2);
+      ensureLayer("RL", 3);
 
-      Object.entries(groupedPoints).forEach(([groupName, pointsArray], i) => {
+      groupedPoints.forEach((pointsArray, i) => {
         if (!pointsArray.length) return;
-        const { layerCode, layerName, layerColor = 7, floor } = pointsArray[0];
-        ensureLayer(layerName, layerColor, "CONTINUOUS");
+        const { layerCode, layerName, layerColor, floor, centerText } =
+          pointsArray[0];
+        ensureLayer(layerName, layerColor);
 
-        const processedPoints = checkPoint(pointsArray);
-
-        processedPoints.forEach((pt, i) => {
+        pointsArray.forEach((pt, i) => {
           d.setActiveLayer("CODE");
           d.drawText(pt.x, pt.y, 0.14, 0, `${pt.name}_${pt.sn}`);
           d.setActiveLayer("RL");
@@ -70,68 +32,33 @@ const controller = {
           d.drawPoint(pt.x, pt.y, pt.z);
         });
 
-        const allHaveId = processedPoints.every((pt) => pt.id);
-        if (allHaveId && processedPoints.length > 1) {
-          const polylineVertices = processedPoints.map((pt) => [
+        const allHaveId = pointsArray.every((pt) => pt.id);
+        if (allHaveId && pointsArray.length > 1) {
+          const polylineVertices = pointsArray.map((pt) => [
             +pt.x,
             +pt.y,
             +pt.z || 0,
           ]);
 
-          if (
-            [
-              "B",
-              "MB",
-              "MH",
-              "UCB",
-              "UC",
-              "S",
-              "SS",
-              "TS",
-              "SP",
-              "PH",
-              "STAIR",
-              "DT",
-              "ST",
-            ].includes(layerCode)
-          ) {
-            polylineVertices.push(polylineVertices[0]);
-          }
           d.setActiveLayer(layerName);
           d.drawPolyline3d(polylineVertices);
         }
 
-        if (
-          processedPoints.length === 4 ||
-          ([
-            "F",
-            "P",
-            "DR",
-            "RCC",
-            "CC",
-            "PH",
-            "STAIR",
-            "CV",
-            "RE",
-            "DT",
-            "RB",
-          ].includes(layerCode) &&
-            processedPoints.length > 1)
-        ) {
+        if (centerText) {
           const midX =
-            processedPoints.reduce((acc, pt) => acc + +pt.x, 0) /
-            processedPoints.length;
+            pointsArray.reduce((acc, pt) => acc + +pt.x, 0) /
+            pointsArray.length;
           const midY =
-            processedPoints.reduce((acc, pt) => acc + +pt.y, 0) /
-            processedPoints.length;
-          ensureLayer("TEXT", 7, "CONTINUOUS");
+            pointsArray.reduce((acc, pt) => acc + +pt.y, 0) /
+            pointsArray.length;
+          ensureLayer("TEXT");
           d.setActiveLayer("TEXT");
           d.drawText(
             midX,
             midY,
             0.8,
             0,
-            `${floor}${gettextCreation(pointsArray[0])}`,
+            `${floor}${centerText}`,
             "center",
             "middle"
           );
