@@ -10,6 +10,7 @@ app.use(
   cors({
     origin: [
       process.env.BASE_URL,
+      "https://api-autocad.xorinlab.com",
       "https://autocad-frontend.vercel.app",
       "http://localhost:8080",
     ],
